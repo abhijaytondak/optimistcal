@@ -420,7 +420,20 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
 @keyframes introPop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
 @keyframes introUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes pulseB{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
-@media(max-width:560px){.vs-row{gap:8px}.vs-card .lbl{font-size:9.5px}.vs-card img{width:96px}.vs-x{font-size:24px}.winner{font-size:9px;padding:4px 9px;bottom:-10px}.intro-eyebrow{margin-bottom:20px;font-size:11px}.intro-title{margin-top:24px}.bolt{width:60px}}
+@media(max-width:560px){
+  .intro-inner{padding:20px}
+  .vs-row{flex-direction:column;gap:2px}
+  .vs-card{gap:8px}
+  .vs-card .lbl{font-size:11px}
+  .vs-card img{width:min(78vw,310px)}
+  .vs-x{font-size:26px;margin:4px 0;text-shadow:0 0 20px rgba(130,185,255,.8)}
+  .intro.decided .vs-card.opt{transform:scale(1.03)}
+  .winner{font-size:9.5px;padding:4px 11px;bottom:-11px}
+  .intro-eyebrow{margin-bottom:16px;font-size:11px}
+  .intro-title{margin-top:26px}
+  .intro .skip{margin-top:22px}
+  .bolt{width:56px}
+}
 
 /* ============================== WINNER REVEAL ============================== */
 .winner-screen{position:fixed;inset:0;z-index:150;display:none;place-items:center;overflow:hidden;background:radial-gradient(120% 100% at 50% 38%,#16263f,#070a14 72%)}
