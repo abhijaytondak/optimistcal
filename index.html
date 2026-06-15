@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Optimist — Compare &amp; Save Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+/* ============================== TOKENS (Optimist brand · LIGHT) ============================== */
+:root{
+  --bg:#EDF1F8;
+  --surface:#FFFFFF;
+  --surface-2:#F5F8FD;
+  --surface-3:#EEF2FA;
+  --ink:#16203A;
+  --text:#16203A; --text-dim:#586079; --text-mute:#98A1B6;
+  --border:rgba(16,21,37,0.09);
+  --border-2:rgba(16,21,37,0.16);
+  --border-accent:rgba(52,120,246,0.30);
+  --blue:#3478F6;          /* Optimistic Blue */
+  --blue-bright:#1265FF;   /* Sky start */
+  --blue-deep:#1E54D2;
+  --cyan:#69CDEB;          /* Sky mid */
+  --mint:#AEFFD8;          /* Fresh Mint */
+  --mint-bright:#46F5A0;   /* Sky end */
+  --mint-ink:#0B7A48;
+  --cream:#FFFCDC;         /* Morning Light */
+  --lav:#EDF0FB;           /* light lavender card */
+  --night:#191C26;         /* Cool Night-ish (for "your AC") */
+  --sky:linear-gradient(120deg,#1265FF 0%,#3478F6 44%,#69CDEB 88%,#46F5A0 116%);
+  --danger:#E5483B; --amber:#E0931C;
+  --r-xl:28px; --r-lg:22px; --r-md:15px; --r-sm:11px; --r-pill:999px;
+  --shadow:0 12px 34px -16px rgba(20,40,90,.20),0 2px 8px rgba(20,40,90,.06);
+  --shadow-lg:0 34px 70px -24px rgba(20,40,90,.28);
+  --shadow-blue:0 22px 50px -18px rgba(52,120,246,.45);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --font:"Outfit",-apple-system,system-ui,sans-serif;
+  --num:"Outfit",-apple-system,system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;font-size:16px;min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(820px 520px at 90% -6%, rgba(52,120,246,.12), transparent 60%),
+    radial-gradient(720px 520px at 4% 102%, rgba(174,255,216,.22), transparent 60%),
+    radial-gradient(680px 480px at 100% 100%, rgba(105,205,235,.12), transparent 60%),
+    linear-gradient(180deg,#F4F7FD,#E9EEF7);
+}
+::selection{background:var(--blue);color:#fff}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+
+/* ============================== TOPBAR ============================== */
+.topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(18px) saturate(150%);background:rgba(244,247,253,.78);border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.02em;font-size:20px;color:var(--ink)}
+.brand .mark{width:33px;height:33px;border-radius:11px;display:grid;place-items:center;background:var(--sky);box-shadow:0 6px 16px -4px rgba(52,120,246,.5);color:#fff}
+.brand .mark svg{width:18px;height:18px}
+.brand b{color:var(--blue)}
+.pill-badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);padding:8px 14px;border-radius:var(--r-pill);background:var(--surface);border:1px solid var(--border)}
+.pill-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 9px var(--blue);animation:pulse 2.2s var(--ease) infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* views */
+.view{display:none}
+.view.show{display:block;animation:viewIn .5s var(--ease-out)}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ============================== HERO + FORM ============================== */
+.hero{padding:52px 0 28px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--blue);padding:7px 14px;border-radius:var(--r-pill);background:rgba(52,120,246,.08);border:1px solid var(--border-accent);margin-bottom:20px}
+.hero h1{font-size:clamp(34px,6vw,60px);line-height:1.03;font-weight:800;letter-spacing:-.03em;max-width:15ch;color:var(--ink)}
+.hero h1 .accent{background:var(--sky);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{margin-top:18px;font-size:17px;color:var(--text-dim);max-width:48ch}
+.layout{display:grid;grid-template-columns:1fr;gap:22px;margin-top:36px}
+@media(min-width:980px){.layout{grid-template-columns:1.12fr .88fr;align-items:start}}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px;box-shadow:var(--shadow)}
+@media(min-width:600px){.panel{padding:32px}}
+.section-tag{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.13em;color:var(--text-mute);margin:4px 0 18px}
+.section-tag .n{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-family:var(--num);background:rgba(52,120,246,.12);color:var(--blue);font-size:12px;font-weight:700}
+.section-tag:not(:first-child){margin-top:30px;padding-top:26px;border-top:1px solid var(--border)}
+
+.field{margin-bottom:18px}
+.field>label{display:block;font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:9px}
+.field .opt{color:var(--text-mute);font-weight:500}
+.hint{font-size:12.5px;color:var(--text-mute);margin-top:7px;display:flex;align-items:center;gap:6px;min-height:16px}
+.hint.assume{color:var(--blue)}
+.hint svg{width:13px;height:13px;flex:none}
+
+.control{width:100%;height:52px;padding:0 16px;border-radius:var(--r-md);font-size:15px;color:var(--text);background:var(--surface-2);border:1px solid var(--border-2);transition:.18s var(--ease);appearance:none}
+.control::placeholder{color:var(--text-mute)}
+.control:hover{border-color:var(--border-accent)}
+.control:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,120,246,.14);background:#fff}
+.control.invalid{border-color:var(--danger);box-shadow:0 0 0 4px rgba(229,72,59,.12)}
+select.control{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%233478F6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center;padding-right:42px;cursor:pointer}
+
+.err{font-size:12.5px;color:var(--danger);margin-top:7px;display:none;align-items:center;gap:6px}
+.err.show{display:flex;animation:shake .35s var(--ease)}
+.err svg{width:13px;height:13px;flex:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{height:52px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-dim);font-weight:600;font-size:15px;transition:.18s var(--ease)}
+.seg button .u{display:block;font-size:11px;color:var(--text-mute);font-weight:500;margin-top:1px}
+.seg button:hover{border-color:var(--border-accent);color:var(--text)}
+.seg button[aria-pressed="true"]{background:rgba(52,120,246,.10);border-color:var(--blue);color:var(--blue-deep);box-shadow:0 6px 18px -8px rgba(52,120,246,.5)}
+.seg button[aria-pressed="true"] .u{color:var(--blue)}
+
+.stars{display:flex;align-items:center;gap:6px}
+.stars button{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--border-2);transition:.16s var(--ease)}
+.stars button svg{width:22px;height:22px;fill:#CBD2E0;transition:.16s var(--ease)}
+.stars button:hover{border-color:var(--border-accent);transform:translateY(-2px)}
+.stars button.on{border-color:var(--blue);background:rgba(52,120,246,.10)}
+.stars button.on svg{fill:var(--blue);filter:drop-shadow(0 2px 4px rgba(52,120,246,.4))}
+.stars .clear{width:auto;padding:0 12px;font-size:12.5px;color:var(--text-mute);border-radius:var(--r-pill)}
+.stars .clear:hover{color:var(--text-dim)}
+
+/* ===== vertical ruler (usage hours) — inspired by the timeline ===== */
+.ruler-field{display:flex;gap:20px;align-items:stretch;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r-lg);padding:18px 20px}
+.ruler{position:relative;width:74px;flex:none;display:flex;justify-content:center}
+.ruler-track{position:relative;width:100%;height:268px;cursor:pointer;touch-action:none}
+.ruler-track::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+  background:repeating-linear-gradient(to bottom,var(--border-2) 0 1px,transparent 1px 11.6px)}
+.ruler-ticks{position:absolute;left:50%;top:0;bottom:0;width:30px;transform:translateX(-50%)}
+.ruler-fill{position:absolute;left:50%;bottom:0;width:4px;transform:translateX(-50%);border-radius:99px;background:linear-gradient(to top,var(--blue-bright),var(--cyan));box-shadow:0 0 14px rgba(52,120,246,.5);transition:height .15s var(--ease)}
+.ruler-glow{position:absolute;left:50%;width:64px;height:64px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(52,120,246,.28),transparent 70%);pointer-events:none;transition:top .15s var(--ease)}
+.ruler-handle{position:absolute;left:50%;width:42px;height:42px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;border:1px solid var(--border-2);box-shadow:0 8px 20px -6px rgba(20,40,90,.35),inset 0 0 0 4px rgba(52,120,246,.10);display:grid;place-items:center;cursor:grab;transition:top .15s var(--ease)}
+.ruler-handle:active{cursor:grabbing}
+.ruler-handle svg{width:18px;height:18px;color:var(--blue)}
+.ruler-handle:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(52,120,246,.3),0 8px 20px -6px rgba(20,40,90,.35)}
+.ruler-labels{position:relative;width:30px;flex:none;font-size:11px;color:var(--text-mute);font-family:var(--num)}
+.ruler-labels span{position:absolute;left:0;transform:translateY(-50%);white-space:nowrap}
+.ruler-readout{align-self:center;display:flex;flex-direction:column;justify-content:center}
+.ruler-readout .big{font-family:var(--num);font-size:clamp(54px,9vw,80px);font-weight:800;line-height:.85;letter-spacing:-.04em;color:var(--ink)}
+.ruler-readout .big small{font-size:.34em;font-weight:600;color:var(--blue);letter-spacing:0;margin-left:4px}
+.ruler-readout .cap{font-size:13px;color:var(--text-dim);margin-top:8px;font-weight:500}
+.ruler-readout .cap b{color:var(--text);font-weight:700}
+
+.calc-btn{width:100%;height:60px;margin-top:28px;border-radius:var(--r-lg);font-size:16.5px;font-weight:700;color:#fff;letter-spacing:-.01em;position:relative;overflow:hidden;background:var(--sky);box-shadow:0 16px 38px -14px rgba(52,120,246,.65);transition:.2s var(--ease);display:flex;align-items:center;justify-content:center;gap:10px}
+.calc-btn:hover{transform:translateY(-2px);box-shadow:0 22px 48px -14px rgba(52,120,246,.8)}
+.calc-btn:active{transform:translateY(0)}
+.calc-btn svg{width:20px;height:20px}
+.calc-btn::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:sheen 3.6s var(--ease) infinite}
+@keyframes sheen{0%,60%{left:-60%}100%{left:140%}}
+
+/* preview */
+.preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;box-shadow:var(--shadow);position:relative;overflow:hidden;display:flex;flex-direction:column;gap:18px;min-height:100%}
+.preview .glow{position:absolute;top:-50px;right:-50px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(105,205,235,.30),transparent 70%);filter:blur(14px);pointer-events:none}
+.pv-top{display:flex;align-items:center;justify-content:space-between;position:relative}
+.pv-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.15em;color:var(--text-mute);font-weight:600}
+.matched{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#fff;padding:6px 12px;border-radius:var(--r-pill);background:linear-gradient(120deg,var(--blue),var(--blue-deep));box-shadow:0 6px 14px -4px rgba(52,120,246,.5)}
+.matched svg{width:13px;height:13px}
+.ac-stage{position:relative;border-radius:var(--r-lg);overflow:hidden;background:linear-gradient(165deg,#EAF1FB,#DCE8F7);border:1px solid var(--border);aspect-ratio:14/5;display:grid;place-items:center;padding:10px 14px}
+.ac-stage img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 22px rgba(20,40,90,.18))}
+.ac-stage .placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--text-mute);text-align:center;padding:20px}
+.ac-stage .placeholder svg{width:60px;height:60px;opacity:.6}
+.ac-stage .placeholder b{color:var(--text-dim);font-size:14px;font-weight:600}
+.ac-stage .placeholder span{font-size:12px;max-width:24ch}
+.pv-model{font-family:var(--num);font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.pv-model .ton{color:var(--blue)}
+.pv-specs{display:flex;flex-wrap:wrap;gap:8px}
+.spec-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);padding:7px 12px;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--border)}
+.spec-chip b{color:var(--blue);font-weight:700}
+.pv-note{font-size:12px;color:var(--text-mute);margin-top:auto;display:flex;gap:7px;align-items:flex-start}
+.pv-note svg{width:14px;height:14px;flex:none;margin-top:1px;color:var(--blue)}
+.pv-logo{height:21px;width:auto;display:block}
+.pv-feats{display:flex;flex-direction:column;gap:13px;margin-top:2px}
+.pv-feat{display:flex;align-items:flex-start;gap:11px}
+.pv-feat .fi{width:22px;height:22px;border-radius:7px;flex:none;display:grid;place-items:center;background:rgba(52,120,246,.12)}
+.pv-feat .fi svg{width:13px;height:13px;color:var(--blue)}
+.pv-feat b{display:block;color:var(--ink);font-weight:700;font-size:13.5px;line-height:1.3}
+.pv-feat>div span{color:var(--text-dim);font-size:12.5px}
+.pv-highlight{margin-top:auto;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:var(--r-md);background:linear-gradient(120deg,rgba(52,120,246,.10),rgba(70,245,160,.12));border:1px solid var(--border-accent)}
+.pv-highlight>svg{width:24px;height:24px;color:var(--blue);flex:none}
+.pv-highlight b{display:block;font-family:var(--num);font-weight:800;color:var(--ink);font-size:14.5px;line-height:1.2}
+.pv-highlight>div span{font-size:12px;color:var(--text-dim)}
+
+/* ============================== LOADING ============================== */
+.loading{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:rgba(237,241,248,.86);backdrop-filter:blur(10px)}
+.loading.show{display:grid;animation:fade .3s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.loader-box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:24px}
+.ring-spin{width:92px;height:92px;position:relative}
+.ring-spin svg{width:100%;height:100%;animation:rot 1.1s linear infinite}
+.ring-spin .leaf{position:absolute;inset:0;display:grid;place-items:center}
+.ring-spin .leaf svg{width:30px;height:30px;animation:none;color:var(--blue)}
+@keyframes rot{to{transform:rotate(360deg)}}
+.ltxt{font-size:18px;font-weight:700;color:var(--ink)}
+.lsub{font-size:13.5px;color:var(--text-mute);font-family:var(--num)}
+.loader-bar{width:min(330px,86vw);height:6px;border-radius:999px;background:#DCE3EF;overflow:hidden}
+.loader-bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--sky)}
+.lsteps{display:flex;flex-direction:column;gap:11px;width:min(330px,86vw);text-align:left}
+.lstep{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-dim);opacity:0;transform:translateY(6px);transition:.35s var(--ease)}
+.lstep.in{opacity:1;transform:none}
+.lstep .ic{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;box-sizing:border-box;border:2px solid #D5DDEC;border-top-color:var(--blue);animation:rot .8s linear infinite}
+.lstep.done .ic{border:none;background:var(--blue);animation:none}
+.lstep .ic svg{width:13px;height:13px;color:#fff;opacity:0}
+.lstep.done .ic svg{opacity:1}
+.lstep .ll{font-weight:500}
+.lstep.done .ll{color:var(--text)}
+.lstep .lv{margin-left:auto;font-family:var(--num);font-weight:700;color:var(--ink);opacity:0;transition:.3s}
+.lstep.done .lv{opacity:1}
+
+/* ============================== RESULTS ============================== */
+.res-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 0 6px;flex-wrap:wrap}
+.back-btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text-dim);padding:9px 16px;border-radius:var(--r-pill);background:var(--surface);border:1px solid var(--border)}
+.back-btn:hover{color:var(--blue);border-color:var(--border-accent)}
+.back-btn svg{width:16px;height:16px}
+.res-head{text-align:center;max-width:62ch;margin:14px auto 28px}
+.res-head .eyebrow{margin-bottom:14px}
+.res-head h2{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-.025em;line-height:1.08;color:var(--ink)}
+.res-head h2 em{font-style:normal;color:var(--blue)}
+.res-head p{margin-top:12px;color:var(--text-dim);font-size:15.5px}
+
+.stack{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow);position:relative;opacity:0;transform:translateY(18px)}
+.card.reveal{animation:rise .7s var(--ease-out) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.ctitle{font-size:11.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--text-mute);font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.ctitle svg{width:15px;height:15px;color:var(--blue)}
+
+/* HERO savings (Sky gradient, white) */
+.hero-card{background:var(--sky);border:none;box-shadow:var(--shadow-blue);color:#fff;overflow:hidden}
+.hero-card .ctitle{color:rgba(255,255,255,.82)}.hero-card .ctitle svg{color:#fff}
+.hero-card .inner{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.gauge{display:flex;flex-direction:column;gap:5px}
+.gauge i{display:block;width:22px;height:2px;border-radius:2px;background:rgba(255,255,255,.32)}
+.gauge i.lit{background:#fff;box-shadow:0 0 8px rgba(255,255,255,.85);width:30px}
+.gauge i.mark{position:relative}
+.gauge i.mark::after{content:"";position:absolute;right:-12px;top:-3px;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 12px #fff}
+.hero-card .big{font-family:var(--num);font-weight:800;letter-spacing:-.03em;line-height:.85;font-size:clamp(56px,12vw,108px);color:#fff}
+.hero-card .rupee{font-size:.46em;vertical-align:.2em;margin-right:.04em;opacity:.9}
+.hero-card .per{font-size:15px;color:rgba(255,255,255,.88);font-weight:500;margin-top:8px}
+.hero-card .ann{margin-top:18px;display:inline-flex;align-items:center;gap:9px;font-size:13.5px;padding:9px 15px;border-radius:var(--r-pill);background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.32);color:#fff;font-weight:700}
+.hero-card .ann svg{width:15px;height:15px}
+
+/* ===== electricity area chart (image #12) ===== */
+.echart{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+.ecol{position:relative;display:flex;flex-direction:column}
+.ecol-num{font-family:var(--num);font-weight:800;font-size:clamp(40px,7vw,58px);line-height:.9;letter-spacing:-.03em;color:#8A94A8}
+.ecol.optim .ecol-num{color:var(--blue)}
+.ecol-num small{font-size:.32em;font-weight:600;margin-left:6px;color:var(--text-mute)}
+.ecol.optim .ecol-num small{color:var(--blue)}
+.ecol-cap{font-size:13px;font-weight:600;color:var(--text-dim);margin-top:4px}
+.ecol.optim .ecol-cap{color:var(--blue-deep)}
+.area-svg{width:100%;height:160px;margin-top:6px;display:block}
+.echart-foot{font-size:13px;color:var(--text-dim);margin-top:14px;display:flex;align-items:center;gap:7px}
+.echart-foot b{color:var(--blue);font-weight:700;font-family:var(--num)}
+
+/* ===== comparison (dark vs blue) ===== */
+.compare{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:680px){.compare{grid-template-columns:1fr 1fr}}
+.cmp{border-radius:var(--r-lg);padding:24px;position:relative;overflow:hidden;min-height:320px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+.cmp.yours{background:linear-gradient(160deg,#222633,#15171F);color:#E7EAF2}
+.cmp.optim{background:linear-gradient(150deg,var(--blue-bright),var(--blue) 55%,var(--cyan));color:#fff;box-shadow:var(--shadow-blue)}
+.cmp .ctag2{font-size:11.5px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.cmp.yours .ctag2{color:#8A93A6}.cmp.optim .ctag2{color:rgba(255,255,255,.72)}
+.cmp .cname{font-family:var(--num);font-size:17px;font-weight:700;margin-top:6px}
+.cmp.yours .cname{color:#C7CDDB}
+.cmp .cmoney{font-family:var(--num);font-weight:800;font-size:clamp(36px,7vw,50px);line-height:.9;letter-spacing:-.03em;margin-top:auto}
+.cmp.yours .cmoney{color:#9AA3B5}
+.cmp .cmoney .rupee{font-size:.5em;vertical-align:.18em}
+.cmp .cmeta{font-size:12.5px;margin-top:10px;display:flex;gap:14px;flex-wrap:wrap}
+.cmp.yours .cmeta{color:#828B9E}.cmp.optim .cmeta{color:rgba(255,255,255,.82);font-weight:500}
+.cmp .cmeta b{font-family:var(--num)}
+.cmp.optim .badge{position:absolute;top:18px;right:18px;font-size:11px;font-weight:700;background:var(--mint);color:#06301d;padding:5px 11px;border-radius:var(--r-pill)}
+.cmp-ac{flex:1;display:flex;align-items:center;justify-content:center;padding:18px 0;min-height:150px}
+.cmp-ac img{width:100%;max-height:180px;object-fit:contain;filter:drop-shadow(0 16px 28px rgba(0,0,0,.42))}
+.cmp.optim .cmp-ac img{filter:drop-shadow(0 16px 30px rgba(8,30,70,.38))}
+
+/* ===== secondary chamfered cards (image #14) ===== */
+.scards{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:680px){.scards{grid-template-columns:repeat(3,1fr)}}
+.scard{position:relative;background:var(--lav);border-radius:var(--r-lg);padding:22px;min-height:190px;display:flex;flex-direction:column}
+.scard.hot{background:var(--sky);color:#fff;box-shadow:var(--shadow-blue)}
+.scard-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(52,120,246,.12);margin-bottom:auto}
+.scard-ic svg{width:21px;height:21px;color:var(--blue)}
+.scard.hot .scard-ic{background:rgba(255,255,255,.20)}.scard.hot .scard-ic svg{color:#fff}
+.scard-num{font-family:var(--num);font-weight:800;font-size:clamp(44px,8vw,60px);line-height:.85;letter-spacing:-.03em;color:var(--blue-deep);margin-top:20px}
+.scard.hot .scard-num{color:#fff}
+.scard-num small{font-size:.34em;font-weight:600;margin-left:5px;color:var(--text-mute)}
+.scard.hot .scard-num small{color:rgba(255,255,255,.8)}
+.scard-label{font-size:15px;font-weight:700;color:var(--ink);margin-top:8px}
+.scard.hot .scard-label{color:#fff}
+.scard-sub{font-size:12px;color:var(--text-dim);margin-top:6px;max-width:22ch}
+.scard.hot .scard-sub{color:rgba(255,255,255,.85)}
+
+/* efficiency scale */
+.scale{display:flex;gap:5px;margin-top:14px}
+.scale .s{flex:1;height:46px;border-radius:10px;display:grid;place-items:center;font-family:var(--num);font-weight:800;font-size:15px;color:#0b2438;position:relative;opacity:.4;transition:.3s var(--ease)}
+.scale .s.A{background:#46F5A0}.scale .s.B{background:#69CDEB}.scale .s.C{background:#F5D93B}.scale .s.D{background:#F5A04B}.scale .s.E{background:#F0604B}
+.scale .s.active{opacity:1;transform:translateY(-3px);box-shadow:0 12px 22px -8px rgba(20,40,90,.3)}
+.scale .s.active::after{content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.22)}
+.scale-legend{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.scale-legend span{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);padding:8px 14px;border-radius:var(--r-pill)}
+.scale-legend b{font-family:var(--num);font-weight:800;color:var(--ink);font-size:15px}
+.scale-legend .d{width:11px;height:11px;border-radius:4px}
+
+/* accordion */
+.accordion{border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.acc-head{width:100%;display:flex;align-items:center;justify-content:space-between;padding:20px 24px;font-size:15px;font-weight:700;text-align:left;color:var(--ink)}
+.acc-head .ic{display:flex;align-items:center;gap:12px}
+.acc-head .ic svg{width:18px;height:18px;color:var(--blue)}
+.acc-head .chev{width:20px;height:20px;transition:.3s var(--ease);color:var(--text-mute)}
+.accordion.open .chev{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .45s var(--ease)}
+.acc-inner{padding:0 24px 24px;color:var(--text-dim);font-size:14px;line-height:1.7}
+.acc-inner ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.acc-inner li{display:flex;gap:12px;align-items:flex-start}
+.acc-inner li svg{width:16px;height:16px;color:var(--mint-ink);flex:none;margin-top:3px}
+.acc-inner code{font-family:var(--num);background:rgba(52,120,246,.10);padding:2px 7px;border-radius:6px;color:var(--blue-deep);font-size:13px;font-weight:700}
+
+.disclaimer{margin-top:8px;font-size:12.5px;color:var(--text-mute);text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;line-height:1.6}
+.disclaimer svg{width:14px;height:14px;flex:none}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.act.primary{grid-column:1 / -1;order:-1}
+#recalcBtn{grid-column:1 / -1}
+@media(min-width:760px){.actions{grid-template-columns:auto auto 1fr auto;align-items:center}.act.primary{grid-column:auto;order:0}#recalcBtn{grid-column:auto}}
+.act{height:54px;border-radius:var(--r-md);font-weight:600;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:9px;transition:.18s var(--ease);border:1px solid var(--border-2);background:var(--surface);color:var(--text);white-space:nowrap;min-width:0;padding:0 16px}
+.act svg{width:18px;height:18px}
+.act:hover{border-color:var(--border-accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.act.primary{background:var(--sky);color:#fff;border:none;font-weight:700;box-shadow:0 14px 34px -14px rgba(52,120,246,.7)}
+.act.primary:hover{transform:translateY(-2px);box-shadow:0 20px 44px -14px rgba(52,120,246,.85)}
+.act.ghost{background:transparent;border-color:var(--border)}
+.act.ghost:hover{color:var(--blue)}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,140%);z-index:100;display:flex;align-items:center;gap:11px;padding:14px 20px;border-radius:var(--r-pill);background:#fff;border:1px solid var(--border-accent);font-size:14px;font-weight:600;color:var(--ink);box-shadow:var(--shadow-lg);transition:.45s var(--ease)}
+.toast.show{transform:translate(-50%,0)}
+.toast svg{width:18px;height:18px;color:var(--mint-ink)}
+
+footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;border-top:1px solid var(--border);margin-top:30px}
+
+/* social proof carousel */
+.proof{margin:50px 0 6px}
+.proof-head{text-align:center;margin-bottom:22px}
+.proof-head .eyebrow{margin-bottom:12px}
+.proof-head h3{font-size:clamp(20px,3.4vw,30px);font-weight:800;letter-spacing:-.025em;color:var(--ink)}
+.marquee{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.track{display:flex;gap:14px;width:max-content;animation:scroll 46s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.tcard{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;box-shadow:var(--shadow);min-width:286px}
+.tcard .av{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--num);font-size:15px;background:var(--sky)}
+.tcard .who b{display:block;color:var(--ink);font-weight:700;font-size:14px}
+.tcard .who span{color:var(--text-mute);font-size:12.5px}
+.tcard .amt{margin-left:auto;text-align:right}
+.tcard .amt b{display:block;font-family:var(--num);font-weight:800;font-size:20px;color:var(--blue);letter-spacing:-.02em}
+.tcard .amt span{font-size:11px;color:var(--text-mute)}
+
+@media(max-width:560px){
+  .topbar .pill-badge{display:none}
+  .hero{padding:26px 0 14px}
+  .hero h1{font-size:31px;line-height:1.07}
+  .hero .sub{font-size:15px;margin-top:13px}
+  .panel{padding:20px}
+  .ruler-field{gap:12px;padding:16px}
+  .ruler{width:52px}.ruler-track{height:224px}
+  .ruler-readout .big{font-size:50px}
+  .echart{gap:12px}
+  .ecol-num{font-size:36px}
+  .res-top{padding:18px 0 4px}
+  .res-head{margin:8px auto 18px}
+  .res-head h2{font-size:24px;line-height:1.12}
+  .res-head p{font-size:14px}
+  .stack{gap:12px}
+  .card{padding:18px;border-radius:18px}
+  .hero-card .big{font-size:62px}
+  .compare{gap:12px}
+  .cmp{min-height:236px;padding:20px}
+  .cmp-ac{min-height:110px;padding:10px 0}
+  .cmp-ac img{max-height:128px}
+  .cmp .cmoney{font-size:34px}
+  .scards{gap:12px}
+  .scard{min-height:auto;padding:18px}
+  .scard-num{font-size:42px}
+  .proof-head h3{font-size:21px}
+  .tcard{min-width:250px}
+}
+/* ============================== INTRO (versus showdown) ============================== */
+.intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;background:radial-gradient(120% 100% at 50% 25%,#1a2742,#070a14 72%);transition:opacity .6s var(--ease),transform .7s var(--ease)}
+.intro.gone{opacity:0;transform:scale(1.06);pointer-events:none}
+.intro .flash{position:absolute;inset:0;background:linear-gradient(180deg,rgba(190,215,255,.95),rgba(105,205,235,.5));mix-blend-mode:screen;opacity:0;animation:ltng 4.6s linear forwards}
+@keyframes ltng{0%,100%{opacity:0}2%{opacity:.85}3.5%{opacity:.12}5%{opacity:.6}7%{opacity:0}40%{opacity:0}42%{opacity:.9}43.5%{opacity:.2}45%{opacity:.7}47%{opacity:0}73%{opacity:0}75%{opacity:.8}76.5%{opacity:.12}78%{opacity:0}}
+.bolt{position:absolute;top:-3%;width:90px;color:#d4e7ff;opacity:0;filter:drop-shadow(0 0 16px rgba(130,185,255,.95));animation:boltf 4.6s linear forwards}
+.bolt.b1{left:13%}.bolt.b2{right:11%;transform:scaleX(-1);animation-delay:.18s}
+@keyframes boltf{0%,100%{opacity:0}2.5%{opacity:1}6%{opacity:0}42%{opacity:0}44%{opacity:1}47%{opacity:0}75%{opacity:.9}77%{opacity:0}}
+.intro-inner{position:relative;text-align:center;padding:24px;max-width:920px}
+.intro-eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:#9fc2ff;margin-bottom:30px;opacity:1;animation:introUp .6s var(--ease) .15s backwards}
+.vs-row{display:flex;align-items:center;justify-content:center;gap:clamp(16px,4vw,52px)}
+.vs-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;flex:none;transition:transform .45s var(--ease),opacity .45s var(--ease),filter .45s var(--ease)}
+.vs-card .lbl{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.vs-card img{width:clamp(120px,27vw,250px);height:auto;object-fit:contain}
+.vs-card.you{opacity:1;animation:introL .75s var(--ease) .3s backwards}
+.vs-card.you .lbl{color:#8a98b5}
+.vs-card.you img{filter:grayscale(.55) brightness(.82)}
+.vs-card.opt{opacity:1;animation:introR .75s var(--ease) .3s backwards}
+.vs-card.opt .lbl{color:#7fb2ff}
+.vs-card.opt img{filter:drop-shadow(0 12px 34px rgba(52,120,246,.45))}
+.vs-x{font-family:var(--num);font-weight:800;font-size:clamp(28px,6vw,54px);color:#fff;text-shadow:0 0 26px rgba(130,185,255,.7);opacity:1;animation:introPop .55s var(--ease) 1s backwards}
+.intro-title{margin-top:32px;font-size:clamp(25px,4.6vw,46px);font-weight:800;letter-spacing:-.02em;color:#fff;opacity:1;animation:introUp .6s var(--ease) 1.5s backwards}
+.intro-title em{font-style:normal;background:var(--sky);-webkit-background-clip:text;background-clip:text;color:transparent}
+.intro .skip{margin-top:30px;height:54px;padding:0 30px;border-radius:var(--r-pill);font-weight:700;font-size:15px;color:#fff;background:var(--sky);box-shadow:0 16px 38px -12px rgba(52,120,246,.7);display:inline-flex;align-items:center;gap:9px;opacity:1;animation:introUp .6s var(--ease) 2s backwards}
+.intro .skip:hover{transform:translateY(-2px)}
+.winner{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%) scale(0);background:var(--sky);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:5px 12px;border-radius:99px;white-space:nowrap;box-shadow:0 0 20px rgba(52,120,246,.8);transition:transform .45s var(--ease)}
+.intro.decided .vs-card.you{opacity:.34;filter:saturate(.25) brightness(.68)}
+.intro.decided .vs-card.opt{transform:scale(1.06)}
+.intro.decided .vs-card.opt img{filter:drop-shadow(0 16px 52px rgba(52,120,246,.9))}
+.intro.decided .vs-card.opt .winner{transform:translateX(-50%) scale(1)}
+@keyframes introL{from{opacity:0;transform:translateX(-70px)}to{opacity:1;transform:none}}
+@keyframes introR{from{opacity:0;transform:translateX(70px)}to{opacity:1;transform:none}}
+@keyframes introPop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes introUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pulseB{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@media(max-width:560px){.vs-row{gap:8px}.vs-card .lbl{font-size:9.5px}.vs-card img{width:96px}.vs-x{font-size:24px}.winner{font-size:9px;padding:4px 9px;bottom:-10px}.intro-eyebrow{margin-bottom:20px;font-size:11px}.intro-title{margin-top:24px}.bolt{width:60px}}
+
+/* ============================== WINNER REVEAL ============================== */
+.winner-screen{position:fixed;inset:0;z-index:150;display:none;place-items:center;overflow:hidden;background:radial-gradient(120% 100% at 50% 38%,#16263f,#070a14 72%)}
+.winner-screen.show{display:grid;animation:fade .3s var(--ease)}
+.winner-screen.gone{opacity:0;transition:opacity .55s var(--ease);pointer-events:none}
+.winner-screen .wflash{position:absolute;inset:0;background:linear-gradient(180deg,rgba(190,215,255,.9),rgba(105,205,235,.4));mix-blend-mode:screen;opacity:0}
+.winner-screen.show .wflash{animation:winflash 1.4s linear}
+@keyframes winflash{0%{opacity:0}5%{opacity:.92}10%{opacity:.12}16%{opacity:.7}22%{opacity:0}56%{opacity:0}59%{opacity:.5}63%{opacity:0}100%{opacity:0}}
+.win-inner{position:relative;text-align:center;padding:24px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.win-burst{position:absolute;top:36%;left:50%;width:min(620px,92vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(52,120,246,.5),rgba(70,245,160,.12) 45%,rgba(52,120,246,0) 66%);opacity:.9;transform:translate(-50%,-50%);animation:winburst .9s var(--ease) .1s backwards;pointer-events:none}
+@keyframes winburst{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}65%{opacity:1}100%{opacity:.9;transform:translate(-50%,-50%) scale(1)}}
+.win-badge{position:relative;font-size:12.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#9fc2ff;display:inline-flex;align-items:center;gap:8px;opacity:1;animation:introUp .5s var(--ease) .25s backwards}
+.winner-screen img{position:relative;width:clamp(190px,36vw,330px);height:auto;object-fit:contain;filter:drop-shadow(0 20px 60px rgba(52,120,246,.9));opacity:1;animation:winpop .7s var(--ease) .3s backwards;margin:6px 0}
+.win-title{position:relative;font-size:clamp(34px,7vw,66px);font-weight:800;letter-spacing:-.03em;color:#fff;opacity:1;animation:introUp .6s var(--ease) .55s backwards}
+.win-title em{font-style:normal;background:var(--sky);-webkit-background-clip:text;background-clip:text;color:transparent}
+.win-sub{position:relative;font-size:clamp(15px,2.4vw,19px);color:#c8d6ee;opacity:1;animation:introUp .6s var(--ease) .82s backwards}
+.win-sub b{color:#fff;font-family:var(--num);font-weight:800}
+@keyframes winpop{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
+
+@media (prefers-reduced-motion:reduce){.intro{display:none!important}*{animation-duration:.001ms!important;transition-duration:.001ms!important}.card{opacity:1;transform:none}}
+@media print{body::before,.topbar,.res-top,.actions,.loading,footer{display:none!important}body{background:#fff}.card,.cmp,.accordion{box-shadow:none;border:1px solid #ccc;break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro">
+  <div class="flash"></div>
+  <svg class="bolt b1" viewBox="0 0 40 120" fill="currentColor"><path d="M24 0 7 58 19 58 11 120 35 46 21 46 31 0Z"/></svg>
+  <svg class="bolt b2" viewBox="0 0 40 120" fill="currentColor"><path d="M24 0 7 58 19 58 11 120 35 46 21 46 31 0Z"/></svg>
+  <div class="intro-inner">
+    <div class="intro-eyebrow">⚡ The Showdown ⚡</div>
+    <div class="vs-row">
+      <div class="vs-card you"><span class="lbl">Your old AC</span><img src="assets/current-ac.png" alt="Your AC" /></div>
+      <div class="vs-x">VS</div>
+      <div class="vs-card opt"><span class="lbl">Optimist AC</span><img src="assets/optimist-ac.png" alt="Optimist AC" /><span class="winner">★ Pre-selected</span></div>
+    </div>
+    <h2 class="intro-title">Let's see who <em>really wins</em>.</h2>
+    <button class="skip" id="introSkip">See my savings <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20M4.6 4.6l14.8 14.8M19.4 4.6 4.6 19.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+      <span>optimist<b>.</b></span>
+    </div>
+    <span class="pill-badge"><span class="dot"></span> Energy Savings Calculator</span>
+  </div>
+</header>
+
+<!-- ============ VIEW 1 : FORM ============ -->
+<section class="view show" id="formView">
+<main class="wrap">
+  <div class="hero">
+    <span class="eyebrow">❄ Compare &amp; Save</span>
+    <h1>See what your old AC really <span class="accent">costs you.</span></h1>
+    <p class="sub">Switch to an Optimist 5★ inverter and watch the numbers. Enter your current AC and we'll calculate your real savings — in rupees, units, and CO₂.</p>
+
+    <div class="layout">
+      <form class="panel" id="calcForm" novalidate>
+        <div class="section-tag"><span class="n">1</span> Your current AC</div>
+
+        <div class="field">
+          <label for="brand">Current AC brand</label>
+          <select class="control" id="brand" required>
+            <option value="" disabled selected>Select your brand…</option>
+            <option>Voltas</option><option>LG</option><option>Samsung</option><option>Daikin</option>
+            <option>Blue Star</option><option>Hitachi</option><option>Carrier</option><option>Whirlpool</option>
+            <option>Panasonic</option><option>Godrej</option><option>Lloyd</option><option>Haier</option>
+            <option>O General</option><option>Other / Don't know</option>
+          </select>
+          <div class="err" id="brandErr"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Please select your AC brand.</div>
+        </div>
+
+        <div class="field">
+          <label>Tonnage (cooling capacity)</label>
+          <div class="seg" id="tonSeg" role="group" aria-label="Tonnage">
+            <button type="button" data-ton="1" aria-pressed="false">1.0 <span class="u">Ton</span></button>
+            <button type="button" data-ton="1.5" aria-pressed="true">1.5 <span class="u">Ton</span></button>
+            <button type="button" data-ton="2" aria-pressed="false">2.0 <span class="u">Ton</span></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>BEE star rating <span class="opt">— optional</span></label>
+          <div class="stars" id="starRow" role="group" aria-label="Star rating">
+            <button type="button" data-star="1" aria-label="1 star"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9L12 2Z"/></svg></button>
+            <button type="button" data-star="2" aria-label="2 stars"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9L12 2Z"/></svg></button>
+            <button type="button" data-star="3" aria-label="3 stars"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9L12 2Z"/></svg></button>
+            <button type="button" data-star="4" aria-label="4 stars"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9L12 2Z"/></svg></button>
+            <button type="button" data-star="5" aria-label="5 stars"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.2l1.2-6.6L2.5 9l6.6-.9L12 2Z"/></svg></button>
+            <button type="button" class="clear" id="starClear">Not sure</button>
+          </div>
+          <div class="hint assume" id="starHint"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5M12 8v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Assuming a 3★ unit (typical for older ACs).</div>
+        </div>
+
+        <div class="field">
+          <label for="age">AC age <span class="opt">— optional</span></label>
+          <select class="control" id="age">
+            <option value="">Not sure</option>
+            <option value="1">Under 2 years</option>
+            <option value="3">2–4 years</option>
+            <option value="5" selected>4–6 years</option>
+            <option value="8">6–10 years</option>
+            <option value="12">Over 10 years</option>
+          </select>
+          <div class="hint assume" id="ageHint"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5M12 8v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Older ACs lose efficiency — we factor in ~2.5%/yr.</div>
+        </div>
+
+        <div class="section-tag"><span class="n">2</span> Location &amp; usage</div>
+
+        <div class="field">
+          <label for="city">City</label>
+          <input class="control" id="city" list="cityList" placeholder="Start typing… e.g. Mumbai" autocomplete="off" />
+          <datalist id="cityList"></datalist>
+          <div class="err" id="cityErr"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> City not recognized — pick one from the list.</div>
+          <div class="hint" id="cityHint"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg> Used to apply your state's electricity tariff.</div>
+        </div>
+
+        <div class="field">
+          <label>Daily usage <span class="opt">— drag the dial</span></label>
+          <div class="ruler-field">
+            <div class="ruler">
+              <div class="ruler-track" id="rulerTrack">
+                <div class="ruler-fill" id="rulerFill"></div>
+                <div class="ruler-glow" id="rulerGlow"></div>
+                <div class="ruler-handle" id="rulerHandle" tabindex="0" role="slider" aria-label="Daily usage hours" aria-valuemin="1" aria-valuemax="24" aria-valuenow="8">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="m7 9 5-5 5 5M7 15l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="ruler-labels" id="rulerLabels"></div>
+            <div class="ruler-readout">
+              <div class="big"><span id="hoursBig">8</span><small>hrs</small></div>
+              <div class="cap"><b>per day</b> — average runtime</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="calc-btn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Calculate My Savings
+        </button>
+      </form>
+
+      <aside class="preview">
+        <div class="glow"></div>
+        <div class="pv-top">
+          <img class="pv-logo" src="assets/optimist-logo.png" alt="Optimist" />
+          <span class="matched"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Auto-selected</span>
+        </div>
+        <div class="ac-stage">
+          <img id="acImg" src="assets/optimist-ac.png" alt="Optimist AC" />
+          <div class="placeholder" id="acPlaceholder" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5" width="19" height="9" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M6 9h9M6 11h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <b>AC image</b><span>assets/optimist-ac.png</span>
+          </div>
+        </div>
+        <div>
+          <div class="pv-model" id="pvModel">Optimist Frostorm Pro <span class="ton">1.5T</span></div>
+          <div class="pv-specs" style="margin-top:12px">
+            <span class="spec-chip">★★★★★ <b id="pvStar">5★</b></span>
+            <span class="spec-chip">ISEER <b id="pvIseer">5.2</b></span>
+            <span class="spec-chip">Inverter <b>Dual</b></span>
+          </div>
+        </div>
+        <div class="pv-feats">
+          <div class="pv-feat"><span class="fi"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Dual Inverter compressor</b><span>Quieter, steadier cooling at lower power</span></div></div>
+          <div class="pv-feat"><span class="fi"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Anti-corrosive copper coils</b><span>Faster cooling, longer compressor life</span></div></div>
+          <div class="pv-feat"><span class="fi"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Wi-Fi + voice control</b><span>Run it from your phone or Alexa</span></div></div>
+          <div class="pv-feat"><span class="fi"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>10-year compressor warranty</b><span>Backed by Optimist Care</span></div></div>
+        </div>
+        <div class="pv-highlight">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 5 6 5 13a7 7 0 0 0 14 0c0-7-7-11-7-11Z" stroke="currentColor" stroke-width="1.8"/></svg>
+          <div><b>Owners save ₹12,000–22,000 / year</b><span>vs an old 3★ AC, on typical usage</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="proof">
+      <div class="proof-head">
+        <span class="eyebrow">★ Real switchers</span>
+        <h3>People are already saving with Optimist.</h3>
+      </div>
+      <div class="marquee"><div class="track" id="proofTrack"></div></div>
+    </section>
+  </div>
+  <footer>optimist • Prototype calculator — figures are illustrative estimates.</footer>
+</main>
+</section>
+
+<!-- ============ VIEW 2 : RESULTS ============ -->
+<section class="view" id="resultsView">
+<main class="wrap">
+  <div class="res-top">
+    <button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Edit my AC details</button>
+    <span class="pill-badge"><span class="dot"></span> Results ready</span>
+  </div>
+
+  <div class="res-head">
+    <span class="eyebrow">✦ Your results</span>
+    <h2>Switching to Optimist saves you <em id="headlineSave">₹0</em> every year.</h2>
+    <p id="headlineSub">Here's the full breakdown — money, energy, and carbon.</p>
+  </div>
+
+  <div class="stack">
+    <!-- HERO -->
+    <div class="card hero-card" data-delay="0">
+      <div class="ctitle"><svg viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Monthly savings</div>
+      <div class="inner">
+        <div class="gauge" aria-hidden="true"><i></i><i class="lit"></i><i class="lit"></i><i class="lit mark"></i><i></i><i></i><i></i></div>
+        <div>
+          <div class="big"><span class="rupee">₹</span><span id="heroMonthly">0</span></div>
+          <div class="per">saved per month on electricity</div>
+          <div class="ann"><svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v5M21 7h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span id="heroAnnual">₹0</span> / year</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ELECTRICITY AREA CHART -->
+    <div class="card" data-delay="1">
+      <div class="ctitle"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> Electricity consumption</div>
+      <div class="echart">
+        <div class="ecol">
+          <div class="ecol-num"><span id="kwhYours">0</span><small>kWh/mo</small></div>
+          <div class="ecol-cap">Your AC</div>
+          <div id="areaYours"></div>
+        </div>
+        <div class="ecol optim">
+          <div class="ecol-num"><span id="kwhOptim">0</span><small>kWh/mo</small></div>
+          <div class="ecol-cap">Optimist</div>
+          <div id="areaOptim"></div>
+        </div>
+      </div>
+      <div class="echart-foot" id="kwhSaved"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--blue)"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> fewer units every month</div>
+    </div>
+
+    <!-- COMPARISON -->
+    <div class="compare">
+      <div class="cmp yours card" data-delay="2" style="opacity:1;transform:none">
+        <div><div class="ctag2">Your current AC</div><div class="cname" id="cmpYoursName">Your AC</div></div>
+        <div class="cmp-ac"><img src="assets/current-ac.png" alt="Your current AC" /></div>
+        <div>
+          <div class="cmoney"><span class="rupee">₹</span><span id="cmpYoursMoney">0</span></div>
+          <div class="cmeta"><span>★ <b id="cmpYoursStar">3</b></span><span>ISEER <b id="cmpYoursIseer">3.3</b></span><span>per month</span></div>
+        </div>
+      </div>
+      <div class="cmp optim card" data-delay="2" style="opacity:1;transform:none">
+        <span class="badge">SAVE <span id="cmpSavePct">0%</span></span>
+        <div><div class="ctag2">Optimist AC</div><div class="cname" id="cmpOptimName">Optimist Frostorm Pro</div></div>
+        <div class="cmp-ac"><img src="assets/optimist-ac.png" alt="Optimist AC" /></div>
+        <div>
+          <div class="cmoney"><span class="rupee">₹</span><span id="cmpOptimMoney">0</span></div>
+          <div class="cmeta"><span>★ <b>5</b></span><span>ISEER <b>5.2</b></span><span>per month</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECONDARY CHAMFERED CARDS -->
+    <div class="scards">
+      <div class="scard card" data-delay="3" style="opacity:1;transform:none">
+        <div class="scard-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M3 16a5 5 0 0 1 4-8 6 6 0 0 1 11 2 4 4 0 0 1-1 8H7a4 4 0 0 1-4-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <div class="scard-num"><span id="co2Val">0</span><small>kg</small></div>
+        <div class="scard-label">CO₂ avoided / year</div>
+        <div class="scard-sub" id="carSub">Like taking a car off the road for 0 days.</div>
+      </div>
+      <div class="scard card" data-delay="3" style="opacity:1;transform:none">
+        <div class="scard-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 5 6 5 13a7 7 0 0 0 14 0c0-7-7-11-7-11Z" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <div class="scard-num"><span id="treesVal">0</span><small>🌳</small></div>
+        <div class="scard-label">Trees planted / year</div>
+        <div class="scard-sub">The carbon those trees would absorb annually.</div>
+      </div>
+      <div class="scard hot card" data-delay="3" id="paybackCard" style="opacity:1;transform:none">
+        <div class="scard-ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="scard-num"><span id="paybackVal">0</span><small>mo</small></div>
+        <div class="scard-label">Payback period</div>
+        <div class="scard-sub">Energy savings cover the Optimist's price (<span id="paybackPrice">₹0</span>).</div>
+      </div>
+    </div>
+
+    <!-- EFFICIENCY SCALE -->
+    <div class="card" data-delay="4">
+      <div class="ctitle"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Energy efficiency rating</div>
+      <div class="scale" id="effScale"><div class="s A">A</div><div class="s B">B</div><div class="s C">C</div><div class="s D">D</div><div class="s E">E</div></div>
+      <div class="scale-legend">
+        <span><span class="d" style="background:#9AA3B5"></span> Your AC <b id="yourGrade">—</b></span>
+        <span><span class="d" style="background:var(--blue)"></span> Optimist <b style="color:var(--blue)">A</b></span>
+      </div>
+    </div>
+
+    <!-- ACCORDION -->
+    <div class="accordion" id="accordion">
+      <button type="button" class="acc-head" id="accBtn">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8v.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> How we calculate this</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="acc-body" id="accBody"><div class="acc-inner"><ul>
+        <li><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>Each AC's power draw comes from its cooling capacity (tonnage) and its <b>ISEER</b> — the BEE Indian Seasonal Energy Efficiency Ratio. Higher ISEER = less power for the same cooling.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>We model efficiency loss of ~<code>2.5%/yr</code> as ACs age, then apply a compressor duty-cycle factor of <code>0.65</code>.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>Monthly cost = units × your city's tariff (<span id="accTariff">₹8</span>/unit). Savings = your AC's cost − the Optimist's.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>CO₂ uses India's grid factor of <code>0.71 kg/kWh</code>; one mature tree absorbs ≈ <code>21 kg CO₂/yr</code>.</span></li>
+      </ul></div></div>
+    </div>
+
+    <p class="disclaimer"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 11v5M12 8v.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Estimates based on BEE star ratings, ISEER values and state electricity tariffs. Actual savings vary with usage, room size and weather.</p>
+
+    <div class="actions">
+      <button class="act" id="shareBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="1.8"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" stroke="currentColor" stroke-width="1.8"/></svg> Share</button>
+      <button class="act" id="pdfBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Download PDF</button>
+      <a class="act primary" href="#" id="buyBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6h15l-1.5 9h-12L6 6Zm0 0L5 3H2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.6" fill="#fff"/><circle cx="18" cy="20" r="1.6" fill="#fff"/></svg> Buy this Optimist AC</a>
+      <button class="act ghost" id="recalcBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Recalculate</button>
+    </div>
+  </div>
+  <footer>optimist • Prototype calculator — figures are illustrative estimates.</footer>
+</main>
+</section>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="loader-box">
+    <div class="ring-spin">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(20,40,90,.10)" stroke-width="6"/><circle cx="50" cy="50" r="44" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-dasharray="80 200"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#69CDEB"/><stop offset="1" stop-color="#1265FF"/></linearGradient></defs></svg>
+      <div class="leaf"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20M4.6 4.6l14.8 14.8M19.4 4.6 4.6 19.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="ltxt">Calculating your savings…</div>
+    <div class="lsteps" id="lsteps"></div>
+    <div class="loader-bar"><i id="loadBar"></i></div>
+  </div>
+</div>
+
+<!-- WINNER REVEAL -->
+<div class="winner-screen" id="winner">
+  <div class="wflash"></div>
+  <div class="win-inner">
+    <div class="win-burst"></div>
+    <div class="win-badge">🏆 And the winner is</div>
+    <img src="assets/optimist-ac.png" alt="Optimist AC" />
+    <h2 class="win-title">Optimist <em>wins.</em></h2>
+    <p class="win-sub">Saving you <b id="winAmount">₹0</b> every year</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="toastMsg">Done</span></div>
+
+<script>
+const CITIES = {"Mumbai":11,"Delhi":8,"New Delhi":8,"Bengaluru":8,"Bangalore":8,"Chennai":6.5,"Kolkata":9,"Hyderabad":9,"Pune":9.5,"Ahmedabad":7.5,"Jaipur":8,"Lucknow":7,"Chandigarh":6,"Noida":7.5,"Gurugram":7.5,"Gurgaon":7.5,"Surat":7.5,"Indore":7,"Bhopal":7,"Nagpur":9.5,"Patna":7.5,"Kanpur":7,"Coimbatore":6.5,"Kochi":7.8,"Visakhapatnam":9,"Vadodara":7.5,"Thane":11,"Nashik":9.5,"Ludhiana":7,"Agra":7};
+const TON_W = {"1":3517,"1.5":5275,"2":7034};
+const ISEER  = {1:2.7,2:3.0,3:3.3,4:3.7,5:4.0};
+const OPT_ISEER=5.2, DUTY=0.65, CO2=0.71, TREE=21;
+const OPT_MODEL = {"1":"Optimist Frostorm Neo","1.5":"Optimist Frostorm Pro","2":"Optimist Frostorm Max"};
+const OPT_PRICE = {"1":38990,"1.5":46990,"2":58990};
+const state = {ton:"1.5", star:null, age:5, hours:8};
+const $ = s => document.querySelector(s);
+const fmt = n => Math.round(n).toLocaleString("en-IN");
+const kFmt = n => n>=1000 ? "₹"+Math.round(n/1000)+"K" : "₹"+Math.round(n);
+const gradeOf = is => is>=4.5?"A":is>=4.0?"B":is>=3.5?"C":is>=3.0?"D":"E";
+function monthlyKwh(coolW, iseer, hrs){ return (coolW/iseer)/1000 * hrs * DUTY * 30; }
+
+function compute(){
+  const star = state.star ?? 3;
+  const effIseer = Math.max(2.0, ISEER[star] * Math.pow(0.975, state.age));
+  const coolW = TON_W[state.ton], tariff = state._tariff ?? 8;
+  const kwhYours = monthlyKwh(coolW, effIseer, state.hours);
+  const kwhOptim = monthlyKwh(coolW, OPT_ISEER, state.hours);
+  const costYours = kwhYours*tariff, costOptim = kwhOptim*tariff;
+  const saveMonth = Math.max(0, costYours-costOptim), saveYear = saveMonth*12;
+  const kwhSavedYr = Math.max(0,(kwhYours-kwhOptim)*12), co2Yr = kwhSavedYr*CO2;
+  const trees = co2Yr/TREE;
+  const payback = saveMonth>0 ? OPT_PRICE[state.ton]/saveMonth : null;
+  const savePct = costYours>0 ? saveMonth/costYours*100 : 0;
+  return {star,effIseer,tariff,kwhYours,kwhOptim,costYours,costOptim,saveMonth,saveYear,kwhSavedYr,co2Yr,trees,payback,savePct,carDays:co2Yr/2.4};
+}
+function countUp(el,to,dur=1200,prefix="",suffix="",dec=0){
+  const start=performance.now();
+  (function tick(now){ const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),v=to*e;
+    el.textContent=prefix+(dec?v.toFixed(dec):Math.round(v).toLocaleString("en-IN"))+suffix;
+    if(t<1)requestAnimationFrame(tick);})(start);
+}
+function areaSVG(v,maxV,variant){
+  const base=148,topMin=18,usable=118;
+  const topY = Math.max(topMin, base - (maxV?(v/maxV):0)*usable);
+  const slopeY = Math.min(base-4, topY+24);
+  const stroke = variant==='optim'?'#3478F6':'#9AA4B6';
+  const fillTop = variant==='optim'?'rgba(52,120,246,.34)':'rgba(154,164,182,.30)';
+  const fillBot = variant==='optim'?'rgba(52,120,246,0)':'rgba(154,164,182,0)';
+  const id='f'+variant;
+  return `<svg class="area-svg" viewBox="0 0 200 ${base+2}" preserveAspectRatio="none">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${fillTop}"/><stop offset="1" stop-color="${fillBot}"/></linearGradient></defs>
+    <path d="M16,${base} L16,${topY} L116,${topY} L184,${slopeY} L184,${base} Z" fill="url(#${id})"/>
+    <path d="M16,${topY} L116,${topY} L184,${slopeY}" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"${variant==='optim'?' style="filter:drop-shadow(0 1px 5px rgba(52,120,246,.55))"':''}/>
+    <line x1="44" y1="6" x2="44" y2="${topY}" stroke="${stroke}" stroke-width="1.6" stroke-dasharray="2 4" opacity=".75"/>
+    <circle cx="44" cy="6" r="3.4" fill="${stroke}"/>
+    <line x1="116" y1="${topY}" x2="116" y2="${base}" stroke="${stroke}" stroke-width="1" stroke-dasharray="2 4" opacity=".3"/>
+    <line x1="184" y1="${slopeY}" x2="184" y2="${base}" stroke="${stroke}" stroke-width="1" stroke-dasharray="2 4" opacity=".3"/>
+  </svg>`;
+}
+
+/* ---- city datalist ---- */
+const dl=$("#cityList");
+[...new Set(Object.keys(CITIES))].forEach(c=>{const o=document.createElement("option");o.value=c;dl.appendChild(o);});
+
+/* ---- tonnage ---- */
+$("#tonSeg").addEventListener("click",e=>{const b=e.target.closest("button[data-ton]");if(!b)return;state.ton=b.dataset.ton;$("#tonSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#pvModel").innerHTML=OPT_MODEL[state.ton]+' <span class="ton">'+state.ton+'T</span>';});
+
+/* ---- stars ---- */
+const starBtns=$("#starRow").querySelectorAll("button[data-star]");
+function paintStars(){starBtns.forEach(b=>b.classList.toggle("on",state.star!==null&&+b.dataset.star<=state.star));$("#starHint").style.display=state.star===null?"flex":"none";}
+starBtns.forEach(b=>b.addEventListener("click",()=>{state.star=+b.dataset.star;paintStars();}));
+$("#starClear").addEventListener("click",()=>{state.star=null;paintStars();});
+
+/* ---- age ---- */
+$("#age").addEventListener("change",e=>{state.age=e.target.value===""?5:+e.target.value;$("#ageHint").style.display=e.target.value===""?"flex":"none";});
+
+/* ---- vertical ruler (usage hours) ---- */
+const RMIN=1,RMAX=24, rTrack=$("#rulerTrack"),rFill=$("#rulerFill"),rHandle=$("#rulerHandle"),rGlow=$("#rulerGlow");
+(function buildLabels(){const wrap=$("#rulerLabels");[24,20,16,12,8,4,1].forEach(h=>{const frac=(RMAX-h)/(RMAX-RMIN);const s=document.createElement("span");s.textContent=h+"h";s.style.top=(frac*100)+"%";wrap.appendChild(s);});})();
+function setHours(h){
+  h=Math.min(RMAX,Math.max(RMIN,Math.round(h))); state.hours=h;
+  const frac=(RMAX-h)/(RMAX-RMIN);
+  rHandle.style.top=(frac*100)+"%"; rGlow.style.top=(frac*100)+"%";
+  rFill.style.height=((1-frac)*100)+"%";
+  $("#hoursBig").textContent=h; rHandle.setAttribute("aria-valuenow",h);
+}
+function hoursFromY(clientY){const r=rTrack.getBoundingClientRect();let t=(clientY-r.top)/r.height;t=Math.min(1,Math.max(0,t));setHours(RMAX-t*(RMAX-RMIN));}
+let drag=false;
+rTrack.addEventListener("pointerdown",e=>{drag=true;rTrack.setPointerCapture(e.pointerId);hoursFromY(e.clientY);});
+rTrack.addEventListener("pointermove",e=>{if(drag)hoursFromY(e.clientY);});
+rTrack.addEventListener("pointerup",()=>drag=false);
+rTrack.addEventListener("pointercancel",()=>drag=false);
+rHandle.addEventListener("keydown",e=>{if(e.key==="ArrowUp"||e.key==="ArrowRight"){setHours(state.hours+1);e.preventDefault();}if(e.key==="ArrowDown"||e.key==="ArrowLeft"){setHours(state.hours-1);e.preventDefault();}});
+setHours(8);
+
+/* ---- brand/city clear errors ---- */
+$("#brand").addEventListener("change",()=>$("#brandErr").classList.remove("show"));
+$("#city").addEventListener("input",()=>{$("#cityErr").classList.remove("show");$("#city").classList.remove("invalid");});
+
+/* ---- AC image ---- */
+const acImg=$("#acImg");
+acImg.addEventListener("error",()=>{acImg.style.display="none";$("#acPlaceholder").style.display="flex";});
+if(acImg.complete && acImg.naturalWidth===0){acImg.style.display="none";$("#acPlaceholder").style.display="flex";}
+
+/* ---- social proof carousel ---- */
+const TESTI=[{n:"Rahul S.",c:"Mumbai",a:"₹18,400",m:"Frostorm Pro"},{n:"Priya M.",c:"Pune",a:"₹15,200",m:"Frostorm Pro"},{n:"Arjun K.",c:"Delhi",a:"₹21,600",m:"Frostorm Max"},{n:"Sneha R.",c:"Bengaluru",a:"₹13,900",m:"Frostorm Neo"},{n:"Vikram T.",c:"Hyderabad",a:"₹17,300",m:"Frostorm Pro"},{n:"Ananya D.",c:"Chennai",a:"₹12,750",m:"Frostorm Neo"},{n:"Karan P.",c:"Nagpur",a:"₹19,800",m:"Frostorm Max"},{n:"Meera J.",c:"Kolkata",a:"₹16,100",m:"Frostorm Pro"}];
+const tcard=t=>`<div class="tcard"><div class="av">${t.n.split(" ").map(x=>x[0]).join("")}</div><div class="who"><b>${t.n}</b><span>${t.c}</span></div><div class="amt"><b>${t.a}</b><span>saved/yr · ${t.m}</span></div></div>`;
+$("#proofTrack").innerHTML=(TESTI.map(tcard).join("")).repeat(2);
+
+function normalizeCity(v){return Object.keys(CITIES).find(c=>c.toLowerCase()===v.trim().toLowerCase())||null;}
+
+/* ---- submit ---- */
+$("#calcForm").addEventListener("submit",e=>{
+  e.preventDefault(); let ok=true;
+  if(!$("#brand").value){$("#brandErr").classList.add("show");ok=false;}
+  const city=normalizeCity($("#city").value);
+  if(!city){$("#cityErr").classList.add("show");$("#city").classList.add("invalid");ok=false;}
+  else{state._tariff=CITIES[city];state._city=city;}
+  if(!ok){const f=$(".invalid")||$(".err.show");f&&f.scrollIntoView({behavior:"smooth",block:"center"});return;}
+  runCalculation();
+});
+
+function runCalculation(){
+  const r=compute(), load=$("#loading"), bar=$("#loadBar"), box=$("#lsteps");
+  box.innerHTML=""; load.classList.add("show");
+  bar.style.transition="none"; bar.style.width="0%";
+  const steps=[
+    {l:`Located ${state._city}`, v:`₹${r.tariff}/unit`},
+    {l:`Your AC · ${r.star}★, ${state.age} yr old`, v:`${fmt(r.kwhYours)} kWh/mo`},
+    {l:`Optimist 5★ · ISEER 5.2`, v:`${fmt(r.kwhOptim)} kWh/mo`},
+    {l:`Grid carbon · 0.71 kg/kWh`, v:`${fmt(r.co2Yr)} kg/yr`},
+    {l:`Your annual saving`, v:`₹${fmt(r.saveYear)}`}
+  ];
+  let i=0;
+  (function tick(){
+    if(i>0){ const p=box.children[i-1]; p.classList.add("done"); p.querySelector(".lv").textContent=steps[i-1].v; }
+    if(i<steps.length){
+      const row=document.createElement("div"); row.className="lstep";
+      row.innerHTML='<span class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="ll">'+steps[i].l+'</span><span class="lv"></span>';
+      box.appendChild(row); requestAnimationFrame(()=>row.classList.add("in"));
+      bar.style.transition="width .45s cubic-bezier(.22,1,.36,1)"; bar.style.width=((i+1)/steps.length*100)+"%";
+      i++; setTimeout(tick,470);
+    } else {
+      setTimeout(()=>{
+        load.classList.remove("show");
+        render(r); showResults();
+        const win=$("#winner"); $("#winAmount").textContent="₹"+fmt(r.saveYear);
+        win.classList.remove("gone"); win.classList.add("show");
+        setTimeout(()=>{ win.classList.add("gone"); setTimeout(()=>win.classList.remove("show","gone"),600); }, 2200);
+      }, 420);
+    }
+  })();
+}
+
+function showResults(){ $("#formView").classList.remove("show"); $("#resultsView").classList.add("show"); window.scrollTo(0,0); }
+function showForm(){ $("#resultsView").classList.remove("show"); $("#formView").classList.add("show"); window.scrollTo(0,0); }
+
+function render(r){
+  $("#headlineSave").textContent="₹"+fmt(r.saveYear);
+  $("#headlineSub").textContent=`Based on a ${state.ton}T AC running ${state.hours} hrs/day in ${state._city}.`;
+  countUp($("#heroMonthly"),r.saveMonth); $("#heroAnnual").textContent="₹"+fmt(r.saveYear);
+
+  countUp($("#kwhYours"),r.kwhYours); countUp($("#kwhOptim"),r.kwhOptim);
+  const maxK=Math.max(r.kwhYours,r.kwhOptim);
+  $("#areaYours").innerHTML=areaSVG(r.kwhYours,maxK,"yours");
+  $("#areaOptim").innerHTML=areaSVG(r.kwhOptim,maxK,"optim");
+  $("#kwhSaved").innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--blue)"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> <b>${fmt(r.kwhYours-r.kwhOptim)} kWh</b>&nbsp;fewer units every month`;
+
+  countUp($("#co2Val"),r.co2Yr); $("#carSub").textContent=`Like taking a car off the road for ${fmt(r.carDays)} days.`;
+  countUp($("#treesVal"),r.trees,1200,"","",r.trees<10?1:0);
+
+  if(r.payback&&isFinite(r.payback)){$("#paybackCard").style.display="";countUp($("#paybackVal"),r.payback);$("#paybackPrice").textContent="₹"+fmt(OPT_PRICE[state.ton]);}
+  else $("#paybackCard").style.display="none";
+
+  const yg=gradeOf(r.effIseer); $("#yourGrade").textContent=yg;
+  $("#effScale").querySelectorAll(".s").forEach(s=>s.classList.remove("active"));
+  [yg,"A"].forEach(L=>{const el=[...$("#effScale").children].find(c=>c.textContent.trim()===L);if(el)el.classList.add("active");});
+
+  $("#cmpYoursName").textContent=($("#brand").value&&!$("#brand").value.startsWith("Other")?$("#brand").value+" ":"")+state.ton+"T";
+  $("#cmpYoursStar").textContent=r.star; $("#cmpYoursIseer").textContent=r.effIseer.toFixed(1);
+  countUp($("#cmpYoursMoney"),r.costYours); $("#cmpOptimName").textContent=OPT_MODEL[state.ton];
+  countUp($("#cmpOptimMoney"),r.costOptim); $("#cmpSavePct").textContent=Math.round(r.savePct)+"%";
+  $("#accTariff").textContent="₹"+r.tariff;
+  $("#buyBtn").innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="M6 6h15l-1.5 9h-12L6 6Zm0 0L5 3H2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.6" fill="#fff"/><circle cx="18" cy="20" r="1.6" fill="#fff"/></svg> Save '+kFmt(r.saveYear)+' a year';
+
+  $("#resultsView").querySelectorAll(".card").forEach(c=>{
+    if(c.classList.contains("cmp")||c.classList.contains("scard")) return; // these stay static
+    c.classList.remove("reveal");void c.offsetWidth;c.style.animationDelay=(+(c.dataset.delay||0)*90)+"ms";c.classList.add("reveal");
+  });
+}
+
+$("#accBtn").addEventListener("click",()=>{const a=$("#accordion"),b=$("#accBody");a.classList.toggle("open");b.style.maxHeight=a.classList.contains("open")?b.scrollHeight+"px":"0";});
+function toast(m){const t=$("#toast");$("#toastMsg").textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);}
+$("#shareBtn").addEventListener("click",async()=>{const save=$("#headlineSave").textContent;const text=`I could save ${save}/year by switching my AC to Optimist 5★ ❄`;const url=location.href;if(navigator.share){try{await navigator.share({title:"Optimist Savings",text,url});return;}catch(e){}}try{await navigator.clipboard.writeText(text+" "+url);toast("Link copied to clipboard");}catch(e){toast("Share: "+text);}});
+$("#pdfBtn").addEventListener("click",()=>window.print());
+$("#backBtn").addEventListener("click",showForm);
+$("#recalcBtn").addEventListener("click",showForm);
+$("#buyBtn").addEventListener("click",e=>{e.preventDefault();toast("→ Linking to the "+OPT_MODEL[state.ton]+" product page");});
+
+/* ---- intro showdown ---- */
+(function(){
+  const intro=$("#intro"); if(!intro) return;
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches){ intro.style.display="none"; return; }
+  let ended=false;
+  function endIntro(){
+    if(ended) return; ended=true;
+    intro.classList.add("gone");
+    setTimeout(()=>{ intro.style.display="none"; const m=document.querySelector(".matched"); if(m) m.style.animation="pulseB .65s var(--ease) 2"; },650);
+  }
+  setTimeout(()=>intro.classList.add("decided"), 2800);
+  const auto=setTimeout(endIntro, 4600);
+  $("#introSkip").addEventListener("click",()=>{ clearTimeout(auto); endIntro(); });
+  intro.addEventListener("click",e=>{ if(e.target===intro){ clearTimeout(auto); endIntro(); } });
+})();
+</script>
+</body>
+</html>
