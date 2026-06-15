@@ -256,8 +256,7 @@ select.control{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www
 .echart-foot b{color:var(--blue);font-weight:700;font-family:var(--num)}
 
 /* ===== comparison (dark vs blue) ===== */
-.compare{display:grid;grid-template-columns:1fr;gap:16px}
-@media(min-width:680px){.compare{grid-template-columns:1fr 1fr}}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .cmp{border-radius:var(--r-lg);padding:24px;position:relative;overflow:hidden;min-height:320px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
 .cmp.yours{background:linear-gradient(160deg,#222633,#15171F);color:#E7EAF2}
 .cmp.optim{background:linear-gradient(150deg,var(--blue-bright),var(--blue) 55%,var(--cyan));color:#fff;box-shadow:var(--shadow-blue)}
@@ -374,11 +373,15 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
   .stack{gap:12px}
   .card{padding:18px;border-radius:18px}
   .hero-card .big{font-size:62px}
-  .compare{gap:12px}
-  .cmp{min-height:236px;padding:20px}
-  .cmp-ac{min-height:110px;padding:10px 0}
-  .cmp-ac img{max-height:128px}
-  .cmp .cmoney{font-size:34px}
+  .compare{gap:10px}
+  .cmp{min-height:0;padding:14px}
+  .cmp .ctag2{font-size:8.5px;letter-spacing:.06em}
+  .cmp .cname{font-size:12.5px;margin-top:3px}
+  .cmp-ac{min-height:0;padding:12px 0}
+  .cmp-ac img{max-height:82px}
+  .cmp .cmoney{font-size:26px}
+  .cmp .cmeta{font-size:9.5px;gap:6px;margin-top:6px}
+  .cmp.optim .badge{font-size:8px;padding:3px 6px;top:10px;right:10px}
   .scards{gap:12px}
   .scard{min-height:auto;padding:18px}
   .scard-num{font-size:42px}
@@ -458,6 +461,7 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
 </style>
 </head>
 <body>
+<input type="checkbox" id="hpt" switch aria-hidden="true" tabindex="-1" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none" />
 
 <div class="intro" id="intro">
   <div class="flash"></div>
@@ -788,6 +792,8 @@ const OPT_MODEL = {"1":"Optimist Frostorm Neo","1.5":"Optimist Frostorm Pro","2"
 const OPT_PRICE = {"1":38990,"1.5":46990,"2":58990};
 const state = {ton:"1.5", star:null, age:5, hours:8};
 const $ = s => document.querySelector(s);
+const hpt = document.getElementById("hpt");
+function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} try{ if(hpt) hpt.click(); }catch(e){} }
 const fmt = n => Math.round(n).toLocaleString("en-IN");
 const kFmt = n => n>=1000 ? "₹"+Math.round(n/1000)+"K" : "₹"+Math.round(n);
 const gradeOf = is => is>=4.5?"A":is>=4.0?"B":is>=3.5?"C":is>=3.0?"D":"E";
@@ -852,7 +858,9 @@ $("#age").addEventListener("change",e=>{state.age=e.target.value===""?5:+e.targe
 const RMIN=1,RMAX=24, rTrack=$("#rulerTrack"),rFill=$("#rulerFill"),rHandle=$("#rulerHandle"),rGlow=$("#rulerGlow");
 (function buildLabels(){const wrap=$("#rulerLabels");[24,20,16,12,8,4,1].forEach(h=>{const frac=(RMAX-h)/(RMAX-RMIN);const s=document.createElement("span");s.textContent=h+"h";s.style.top=(frac*100)+"%";wrap.appendChild(s);});})();
 function setHours(h){
-  h=Math.min(RMAX,Math.max(RMIN,Math.round(h))); state.hours=h;
+  h=Math.min(RMAX,Math.max(RMIN,Math.round(h)));
+  if(h!==state.hours) haptic(11);
+  state.hours=h;
   const frac=(RMAX-h)/(RMAX-RMIN);
   rHandle.style.top=(frac*100)+"%"; rGlow.style.top=(frac*100)+"%";
   rFill.style.height=((1-frac)*100)+"%";
@@ -895,6 +903,7 @@ $("#calcForm").addEventListener("submit",e=>{
 });
 
 function runCalculation(){
+  haptic(20);
   const r=compute(), load=$("#loading"), bar=$("#loadBar"), box=$("#lsteps");
   box.innerHTML=""; load.classList.add("show");
   bar.style.transition="none"; bar.style.width="0%";
@@ -920,6 +929,7 @@ function runCalculation(){
         render(r); showResults();
         const win=$("#winner"); $("#winAmount").textContent="₹"+fmt(r.saveYear);
         win.classList.remove("gone"); win.classList.add("show");
+        haptic([0,35,55,35,80]);
         setTimeout(()=>{ win.classList.add("gone"); setTimeout(()=>win.classList.remove("show","gone"),600); }, 2200);
       }, 420);
     }
@@ -982,6 +992,7 @@ $("#buyBtn").addEventListener("click",e=>{e.preventDefault();toast("→ Linking 
     setTimeout(()=>{ intro.style.display="none"; const m=document.querySelector(".matched"); if(m) m.style.animation="pulseB .65s var(--ease) 2"; },650);
   }
   setTimeout(()=>intro.classList.add("decided"), 2800);
+  [120,1950,3470].forEach(t=>setTimeout(()=>haptic([0,45,35,80]),t));   // thunder rumbles
   const auto=setTimeout(endIntro, 4600);
   $("#introSkip").addEventListener("click",()=>{ clearTimeout(auto); endIntro(); });
   intro.addEventListener("click",e=>{ if(e.target===intro){ clearTimeout(auto); endIntro(); } });
