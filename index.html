@@ -454,6 +454,8 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
 .win-title em{font-style:normal;background:var(--sky);-webkit-background-clip:text;background-clip:text;color:transparent}
 .win-sub{position:relative;font-size:clamp(15px,2.4vw,19px);color:#c8d6ee;opacity:1;animation:introUp .6s var(--ease) .82s backwards}
 .win-sub b{color:#fff;font-family:var(--num);font-weight:800}
+.win-go{position:relative;margin-top:28px;height:52px;padding:0 28px;border-radius:var(--r-pill);font-weight:700;font-size:15px;color:#fff;background:var(--sky);display:inline-flex;align-items:center;gap:9px;box-shadow:0 16px 38px -12px rgba(52,120,246,.7);opacity:1;animation:introUp .6s var(--ease) 1.05s backwards}
+.win-go:hover{transform:translateY(-2px)}
 @keyframes winpop{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
 
 @media (prefers-reduced-motion:reduce){.intro{display:none!important}*{animation-duration:.001ms!important;transition-duration:.001ms!important}.card{opacity:1;transform:none}}
@@ -461,7 +463,6 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
 </style>
 </head>
 <body>
-<label id="hpt" aria-hidden="true" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:-1;pointer-events:none;overflow:hidden"><input type="checkbox" switch tabindex="-1" /></label>
 
 <div class="intro" id="intro">
   <div class="flash"></div>
@@ -778,6 +779,7 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
     <img src="assets/optimist-ac.png" alt="Optimist AC" />
     <h2 class="win-title">Optimist <em>wins.</em></h2>
     <p class="win-sub">Saving you <b id="winAmount">₹0</b> every year</p>
+    <button class="win-go" id="winGo">See my savings <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </div>
 
@@ -792,11 +794,12 @@ const OPT_MODEL = {"1":"Optimist Frostorm Neo","1.5":"Optimist Frostorm Pro","2"
 const OPT_PRICE = {"1":38990,"1.5":46990,"2":58990};
 const state = {ton:"1.5", star:null, age:5, hours:8};
 const $ = s => document.querySelector(s);
-const hpt = document.getElementById("hpt");          // <label> wrapping an iOS <input switch>
-function iosTap(){ try{ if(hpt) hpt.click(); }catch(e){} }
-function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} iosTap(); }
-// iOS only emits the switch-haptic from a TRUSTED user gesture — fire on every real tap of an interactive control
-document.addEventListener("pointerdown", e=>{ if(e.target.closest && e.target.closest("button,a[href],.seg button,.stars button,.ruler-track,.ruler-handle,select,.act,.acc-head,.back-btn") && !(e.target.closest && e.target.closest("#hpt"))) iosTap(); }, true);
+/* ---- haptics: navigator.vibrate (Android) + iOS 17.4+ <input switch> trick ---- */
+const hSwitch=(function(){const l=document.createElement("label");l.setAttribute("aria-hidden","true");l.style.cssText="position:fixed;left:-1px;bottom:-1px;width:1px;height:1px;opacity:0;pointer-events:none";const i=document.createElement("input");i.type="checkbox";i.setAttribute("switch","");l.appendChild(i);document.documentElement.appendChild(l);return l;})();
+function iosTap(){ try{ hSwitch.click(); }catch(e){} }
+function haptic(p){ try{ if(navigator.vibrate){ navigator.vibrate(p); return; } }catch(e){} iosTap(); }
+// iOS fires the switch-haptic ONLY inside a trusted gesture — trigger on every real tap/drag of a control
+document.addEventListener("pointerdown", e=>{ const t=e.target; if(t&&t.closest&&t.closest("button,a[href],select,.seg button,.stars button,.ruler-track,.ruler-handle,.act,.acc-head,.back-btn")) iosTap(); }, true);
 const fmt = n => Math.round(n).toLocaleString("en-IN");
 const kFmt = n => n>=1000 ? "₹"+Math.round(n/1000)+"K" : "₹"+Math.round(n);
 const gradeOf = is => is>=4.5?"A":is>=4.0?"B":is>=3.5?"C":is>=3.0?"D":"E";
@@ -933,7 +936,11 @@ function runCalculation(){
         const win=$("#winner"); $("#winAmount").textContent="₹"+fmt(r.saveYear);
         win.classList.remove("gone"); win.classList.add("show");
         haptic([0,35,55,35,80]);
-        setTimeout(()=>{ win.classList.add("gone"); setTimeout(()=>win.classList.remove("show","gone"),600); }, 2200);
+        let winDone=false;
+        const dismissWin=()=>{ if(winDone) return; winDone=true; haptic([0,45,65]); win.classList.add("gone"); setTimeout(()=>win.classList.remove("show","gone"),600); };
+        $("#winGo").onclick=dismissWin;
+        win.onclick=e=>{ if(e.target===win) dismissWin(); };
+        setTimeout(dismissWin, 5000);   // fallback if not tapped
       }, 420);
     }
   })();
