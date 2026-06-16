@@ -461,7 +461,7 @@ footer{padding:40px 0;text-align:center;color:var(--text-mute);font-size:12.5px;
 </style>
 </head>
 <body>
-<input type="checkbox" id="hpt" switch aria-hidden="true" tabindex="-1" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none" />
+<label id="hpt" aria-hidden="true" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;z-index:-1;pointer-events:none;overflow:hidden"><input type="checkbox" switch tabindex="-1" /></label>
 
 <div class="intro" id="intro">
   <div class="flash"></div>
@@ -792,8 +792,11 @@ const OPT_MODEL = {"1":"Optimist Frostorm Neo","1.5":"Optimist Frostorm Pro","2"
 const OPT_PRICE = {"1":38990,"1.5":46990,"2":58990};
 const state = {ton:"1.5", star:null, age:5, hours:8};
 const $ = s => document.querySelector(s);
-const hpt = document.getElementById("hpt");
-function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} try{ if(hpt) hpt.click(); }catch(e){} }
+const hpt = document.getElementById("hpt");          // <label> wrapping an iOS <input switch>
+function iosTap(){ try{ if(hpt) hpt.click(); }catch(e){} }
+function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} iosTap(); }
+// iOS only emits the switch-haptic from a TRUSTED user gesture — fire on every real tap of an interactive control
+document.addEventListener("pointerdown", e=>{ if(e.target.closest && e.target.closest("button,a[href],.seg button,.stars button,.ruler-track,.ruler-handle,select,.act,.acc-head,.back-btn") && !(e.target.closest && e.target.closest("#hpt"))) iosTap(); }, true);
 const fmt = n => Math.round(n).toLocaleString("en-IN");
 const kFmt = n => n>=1000 ? "₹"+Math.round(n/1000)+"K" : "₹"+Math.round(n);
 const gradeOf = is => is>=4.5?"A":is>=4.0?"B":is>=3.5?"C":is>=3.0?"D":"E";
